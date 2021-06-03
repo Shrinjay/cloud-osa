@@ -26,7 +26,7 @@ def stop():
 
 
 @controller.route('/trace')
-def trace(command = "STOP"):
+def trace(command = "TRACE"):
     response = requests.get('http://flaskosa.herokuapp.com/cmd/TRACE')
     client_res = {
         'command': command
@@ -70,11 +70,39 @@ def query():
 
     if validate_query(command):
         response = requests.get(get_query_url(command))
-        client_res['status'] = "success"
-        client_res['data'] = response.text.split('+READY>')[1]
+        client_res['data'] = response.text
+
+        if "+READY>" in response.text:
+            client_res['status'] = "success"
+
+        else:
+            client_res['status'] = "failed"
 
         return jsonify(client_res)
 
     else:
         client_res['status'] = "failed"
         return jsonify(client_res)
+
+
+@controller.route('/limits')
+def setLimits():
+    client_res = {
+        'command': 'SET LIMITS'
+    }
+
+    payload = request.args.get('limits')
+    response = requests.get(f"http://flaskosa.herokuapp.com/cmd/LIM/{payload}")
+
+    client_res['data'] = response.text
+
+    if "+READY>" in response.text and "ERROR" not in response.text:
+        client_res['status'] = "success"
+
+    else:
+        client_res['status'] = "failed"
+
+    return jsonify(client_res)
+
+
+
